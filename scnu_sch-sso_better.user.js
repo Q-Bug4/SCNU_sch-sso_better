@@ -16,24 +16,16 @@
   if (window.location.href == "http://www.scholat.com/myCourses.html") {
     var completedTD = [];
     var tab3 = document.getElementById("tabs_3");
-    var completedLessons = [
-      "程序语言基础",
-      "Python程序设计语言",
-      "数学建模方法",
-      "ACM程序设计(一)",
-      "概率论与数理统计",
-    ];
+
     var myLessons = ["软件测试技术","科技文献阅读与写作","平面动画","大数据处理技术与应用"]
-    var closedLesson = document.getElementById("closeCourse");
-    var learnLesson = document.getElementById("learnCourse");
+  
+    var closedLessonObj = document.getElementById("closeCourse");
+    var learnLessonObj = document.getElementById("learnCourse");
 
     function toLessons() {
-      if (document.location.href == "http://www.scholat.com/myCourses.html") {
         // 点击“学习的课程”
         let lessons = undefined;
         lessons = document.getElementById("ui-id-4").click();
-        //window.location.href = "#tab_3";
-      }
     }
 
     function toRealLessons() {
@@ -42,48 +34,46 @@
         return title.parentNode.parentNode.parentNode.parentNode;
       }
 
-      let titles = Array.from(document.getElementsByClassName("evlistTitle"));
+      let lessons = Array.from(document.getElementsByClassName("evlistTitle"));  // 所有课程的集合
       // 对titles进行处理
-      for (let i = titles.length - 1; i >= 0; i--) {
-        if (getTD(titles[i]).parentNode == closedLesson) {
-          titles.splice(i, 1, 0); // 删除已经学习完毕的课程
+      for (let i = lessons.length - 1; i >= 0; i--) {
+        if (getTD(lessons[i]).parentNode == closedLessonObj) {
+          lessons.splice(i, 1, 0); // 删除已经学习完毕的课程
         }
       }
-      while (titles[titles.length - 1] == 0) {
-        titles.pop(); //删除空元素
+      while (lessons[lessons.length - 1] == 0) {
+        lessons.pop(); //删除尾部的空元素
       }
 
-      let learnLesson = getTD(titles[0]).parentNode;
-
-      for (let i = 0; i < titles.length; i++) {
-        if (completedLessons.includes(titles[i].innerText)) {
-          completedTD.push(getTD(titles[i]));
+      for (let i = 0; i < lessons.length; i++) {
+        if (!myLessons.includes(lessons[i].innerText)) {
+          completedTD.push(getTD(lessons[i]));
         }
       }
 
       //删除已完成的课程
       for (let i = 0; i < completedTD.length; i++) {
-        learnLesson.removeChild(completedTD[i]);
+        learnLessonObj.removeChild(completedTD[i]);
       }
 
       //更改正在学习x门课的x
       let learnMsg = document.getElementById("learn_course_msg");
       let learnCnt = Number(
         learnMsg.innerText
-          .replace(" ", "")
+          .replace(" ", "")//文本比较特殊需要删除两个不同的空格
           .replace(" ", "")
           .match(/正在学习(\S*)门课程/)[1]
       );
       learnMsg.innerHTML =
         "正在学习&nbsp;<a>" +
-        (learnCnt - completedLessons.length + "") +
+        (learnCnt - completedTD.length + "") +
         "</a>&nbsp;门课程";
 
       //新增一个未结课模块
       var almostMsg = document.createElement("div");
       almostMsg.innerHTML =
         '<span id="almostMsg" style="font-size:14px;">已结课但未被教师关闭&nbsp;<a>' +
-        completedLessons.length +
+        completedTD.length +
         "</a>&nbsp;门课程</span>";
       tab3.appendChild(almostMsg);
       var Intro3 = document.createElement("div");
@@ -106,7 +96,7 @@
         document.getElementById("alomostCourse").appendChild(completedTD[i]);
       }
 
-      // TODO 增加3个模块之间的空隙
+      //增加3个模块之间的空隙
       let emptyTR1 = document.createElement("tr");
       emptyTR1.innerHTML =
         '<HR style="border:3 double #5DAC81" width="100%" color=#5DAC81 SIZE=3>';
