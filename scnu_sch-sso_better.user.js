@@ -1,17 +1,18 @@
 // ==UserScript==
 // @name         scnu 学者网sso界面改善
 // @namespace    https://github.com/wulnm/
-// @version      0.7
-// @description  学者网未结课课程排版优化，sso默认显示我的应用
+// @version      0.8
+// @description  学者网未结课课程排版优化，sso默认显示我的应用，教务系统跳过等待页面
 // @author       wulnm
 // @match        http://www.scholat.com/myCourses.html
 // @match        https://sso.scnu.edu.cn/AccountService/user/index.html
+// @match        https://jwxt.scnu.edu.cn/xtgl/index_initMenu.html?jsdm=&_t=*
 // @grant        none
 // @run-at document-end
 // ==/UserScript==
-
 (function () {
   "use strict";
+  // 学者网
   if (window.location.href == "http://www.scholat.com/myCourses.html") {
     var completedTD = [];
     var tab3 = document.getElementById("tabs_3");
@@ -22,6 +23,7 @@
       "ACM程序设计(一)",
       "概率论与数理统计",
     ];
+    var myLessons = ["软件测试技术","科技文献阅读与写作","平面动画","大数据处理技术与应用"]
     var closedLesson = document.getElementById("closeCourse");
     var learnLesson = document.getElementById("learnCourse");
 
@@ -128,11 +130,8 @@
       evlist[i].style.display = "none";
     }
   }
-
-  if (
-    window.location.href ==
-    "https://sso.scnu.edu.cn/AccountService/user/index.html"
-  ) {
+  // sso综合平台
+  if (window.location.href =="https://sso.scnu.edu.cn/AccountService/user/index.html") {
     var appList = document.getElementById("oauthapp").parentNode;
     appList.style.display = "none";
 
@@ -146,5 +145,9 @@
     head[1].classList["value"] = "toc selected";
 
     document.getElementById("bannerbox").remove();
+  }
+  // 教务系统
+  if(window.location.href.includes("https://jwxt.scnu.edu.cn/xtgl/index_initMenu.html")){
+    window.location.href = "https://jwxt.scnu.edu.cn/"
   }
 })();
