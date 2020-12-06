@@ -12,6 +12,7 @@
 // @run-at document-end
 
 // @note         2020年12月4日 改良了学者网课程判定逻辑
+// @note         2020年12月7日 增加学者网自定义选项按钮
 // ==/UserScript==
 (function () {
   "use strict";
