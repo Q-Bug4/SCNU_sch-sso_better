@@ -7,25 +7,34 @@
 // @match        http://www.scholat.com/myCourses.html
 // @match        https://sso.scnu.edu.cn/AccountService/user/index.html
 // @match        https://jwxt.scnu.edu.cn/xtgl/index_initMenu.html?jsdm=&_t=*
+// @require      https://cdn.jsdelivr.net/npm/vue/dist/vue.js
 // @grant        none
 // @run-at document-end
+
+// @note         2020年12月4日 改良了学者网课程判定逻辑
 // ==/UserScript==
 (function () {
   "use strict";
+
   // 学者网
   if (window.location.href == "http://www.scholat.com/myCourses.html") {
     var completedTD = [];
     var tab3 = document.getElementById("tabs_3");
 
-    var myLessons = ["软件测试技术","科技文献阅读与写作","平面动画","大数据处理技术与应用"]
-  
+    var myLessons = [
+      "软件测试技术",
+      "科技文献阅读与写作",
+      "平面动画",
+      "大数据处理技术与应用",
+    ];
+
     var closedLessonObj = document.getElementById("closeCourse");
     var learnLessonObj = document.getElementById("learnCourse");
 
     function toLessons() {
-        // 点击“学习的课程”
-        let lessons = undefined;
-        lessons = document.getElementById("ui-id-4").click();
+      // 点击“学习的课程”
+      let lessons = undefined;
+      lessons = document.getElementById("ui-id-4").click();
     }
 
     function toRealLessons() {
@@ -34,7 +43,8 @@
         return title.parentNode.parentNode.parentNode.parentNode;
       }
 
-      let lessons = Array.from(document.getElementsByClassName("evlistTitle"));  // 所有课程的集合
+      let lessons = Array.from(document.getElementsByClassName("evlistTitle")); // 所有课程的集合
+
       // 对titles进行处理
       for (let i = lessons.length - 1; i >= 0; i--) {
         if (getTD(lessons[i]).parentNode == closedLessonObj) {
@@ -60,7 +70,7 @@
       let learnMsg = document.getElementById("learn_course_msg");
       let learnCnt = Number(
         learnMsg.innerText
-          .replace(" ", "")//文本比较特殊需要删除两个不同的空格
+          .replace(" ", "") //文本比较特殊需要删除两个不同的空格
           .replace(" ", "")
           .match(/正在学习(\S*)门课程/)[1]
       );
@@ -119,9 +129,68 @@
     for (let i = 0; i < evlist.length; i++) {
       evlist[i].style.display = "none";
     }
+
+    var sch_setting = document.createElement("div");
+    sch_setting.id = "sch_app";
+    sch_setting.innerHTML =
+      '\
+    <div v-show = "showSetting" class = "side_guide_main" style="position: fixed; width: 300px; right:100px;  top: 128px; border: 1px rgb(238, 238, 238); font-size: 16px; line-height: 1.25em; \
+    color: rgb(255, 255, 255); background-color: rgb(51, 153, 153); right: 0px;">\
+      <div style="padding: 15px; font-size: 16px;">\
+        <ul>\
+          <div id = "list" style="padding: 15px; font-size: 16px;">\
+          \
+        </div>\
+        </ul>\
+      </div>\
+    </div>';
+    document.getElementsByClassName("c")[0].appendChild(sch_setting);
+
+    var allLessons = Array.from(document.getElementsByClassName("evlistTitle"));
+
+    // 自定义div
+    var listDiv = document.getElementById("list");
+    for (let i in allLessons) {
+      if (allLessons[i].innerText == undefined) continue;
+      listDiv.innerHTML +=
+        '<input type="checkbox" v-model="list" value="' +
+        allLessons[i].innerText +
+        '">' +
+        allLessons[i].innerText +
+        "<br>";
+    }
+
+    // 自定义按钮
+    var divCustom = document.createElement("div");
+    divCustom.innerHTML =
+      '<div class="side_guide_main" style="position: fixed; width: 62px; top: 50px; cursor: pointer; border: 1px rgb(238, 238, 238); \
+      font-size: 16px; line-height: 1.25em; color: rgb(255, 255, 255); background-color: rgb(51, 153, 153); right: 200px;">\
+    <div class="side_guide" style="padding: 15px; font-size: 16px;"@click="toggleSetting()">\
+     选项\
+    </div>\
+     </div>';
+    sch_setting.appendChild(divCustom);
+
+    var sch = new Vue({
+      el: "#sch_app",
+      methods: {
+        toggleSetting: function () {
+          this.showSetting = !this.showSetting;
+          console.log(this.showSetting)
+        },
+      },
+      data: {
+        lessons: allLessons,
+        list: [],
+        showSetting: false,
+      },
+    });
   }
   // sso综合平台
-  if (window.location.href =="https://sso.scnu.edu.cn/AccountService/user/index.html") {
+  if (
+    window.location.href ==
+    "https://sso.scnu.edu.cn/AccountService/user/index.html"
+  ) {
     var appList = document.getElementById("oauthapp").parentNode;
     appList.style.display = "none";
 
@@ -137,7 +206,11 @@
     document.getElementById("bannerbox").remove();
   }
   // 教务系统
-  if(window.location.href.includes("https://jwxt.scnu.edu.cn/xtgl/index_initMenu.html")){
-    window.location.href = "https://jwxt.scnu.edu.cn/"
+  if (
+    window.location.href.includes(
+      "https://jwxt.scnu.edu.cn/xtgl/index_initMenu.html"
+    )
+  ) {
+    window.location.href = "https://jwxt.scnu.edu.cn/";
   }
 })();
