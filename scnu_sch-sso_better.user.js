@@ -16,6 +16,7 @@
 // @note         2020年12月4日 改良了学者网课程判定逻辑
 // @note         2020年12月7日 增加学者网自定义选项按钮
 // @note         2021年1月22日 增加学者网自定义显示正在学习课程
+// @note         2021年1月22日 将设置按钮移动至右上角
 // ==/UserScript==
 (function () {
   "use strict";
@@ -25,13 +26,10 @@
     var completedTD = [];
     var tab3 = document.getElementById("tabs_3");
 
-    
     function getCourseList(type) {
       let ObjList;
-      if(type != undefined)
-        ObjList = document.getElementById(type);
-      else
-        ObjList = document;
+      if (type != undefined) ObjList = document.getElementById(type);
+      else ObjList = document;
       let lessons = Array.from(ObjList.getElementsByClassName("evlistTitle"));
       let res = [];
       for (let i in lessons) {
@@ -41,8 +39,7 @@
       }
       return res;
     }
-    
-   
+
     var userList = GM_getValue("userList"); // 用户设置课程列表
 
     var closedLessonObj = document.getElementById("closeCourse");
@@ -149,73 +146,75 @@
 
     var sch_setting = document.createElement("div");
     sch_setting.id = "sch_app";
-    sch_setting.innerHTML =
-      '\
-    <div id = "settingDiv" v-show = "showSetting" class = "side_guide_main" style="position: fixed; width: 300px; right:100px;  top: 128px; border: 1px rgb(238, 238, 238); font-size: 16px; line-height: 1.25em; \
-    color: rgb(255, 255, 255); background-color: rgb(51, 153, 153); left: 0px;">\
-      <div style="padding: 15px; font-size: 16px;">\
-        <ul>\
-          <div id = "list" style="padding: 15px; font-size: 16px;">\
-          \
-        </div>\
-        </ul>\
-        <button id="btnSave" @click="save">保存</button>\
-        <button>取消</button>\
-      </div>\
-    </div>';
-    document.getElementsByClassName("c")[0].appendChild(sch_setting);
+    sch_setting.innerHTML = '\
+      <div v-show="showSetting" id="list" style="position:absolute;left:100%;width:100%;background-color:rgb(18, 202, 255);border: 1px;rgb(238, 238, 238);text-align:left"></div>\
+    '
+    var t5 = document.createElement("li");
+    t5.id = "t5";
+    t5.style = "position:absolute;top:0%;right:-30%;background-color:rgb(18, 202, 255)";
+    t5.innerHTML =
+      '<p class="p1" title="Message" style="width:48px;text-align:left;">\
+    <a style="font-size:14px;color:#fff;"  href="javascript:void(0)" @click="toggleSetting()">设置</a>\
+     </p>';
+     sch_setting.appendChild(t5);
+    document.getElementsByClassName("navList")[0].appendChild(sch_setting);
+
+    // document.getElementsByClassName("c")[0].appendChild(sch_setting);
 
     var allLessons = getCourseList();
 
     // 自定义div
-    var listDiv = document.getElementById("list");
+    var listDiv = document.getElementById('list');
 
     var learnList = getCourseList("learnCourse"); //正在学习列表(学者网展示的列表)
     var closeList = getCourseList("closeCourse"); //已经被关闭的列表
 
+
     // 生成列表变量
     let tempList = [];
-    for(let i=0;i<allLessons.length;i++){
+    for (let i = 0; i < allLessons.length; i++) {
       let lesson = allLessons[i];
-      if(!closeList.includes(lesson))
-        tempList.push(lesson)
+      if (!closeList.includes(lesson)) tempList.push(lesson);
     }
-    
+
     // 生成列表视图
     genUserlist(tempList);
     function genUserlist(lessons) {
-      for (let i=0;i<lessons.length;i++) {
-        if (lessons[i] == undefined) continue;
+      for (let i = 0; i < lessons.length; i++) {
+        let lesson = lessons[i];
+        if (lesson == undefined) continue;
         listDiv.innerHTML +=
           '<input type="checkbox" v-model="list" value="' +
-          lessons[i]+
+          lesson +
           '">' +
-          lessons[i]+
+          '<a href="javascript:void(0);" @click="choose(\''+lesson +'\')">'+lesson+'</a>' +
           "<br>";
       }
     }
-
-
-    // 增加"选项"按钮
-    var divCustom = document.createElement("div");
-    divCustom.innerHTML =
-      '<div class="side_guide_main" style="position: fixed; width: 62px; top: 50px; cursor: pointer; border: 1px rgb(238, 238, 238); \
-      font-size: 16px; line-height: 1.25em; color: rgb(255, 255, 255); background-color: rgb(51, 153, 153); right: 200px;">\
-    <div class="side_guide" style="padding: 15px; font-size: 16px;"@click="toggleSetting()">\
-     选项\
-    </div>\
-     </div>';
-    sch_setting.appendChild(divCustom);
+    // 生成操作按钮
+    let actionDiv = document.createElement("div");
+    actionDiv.innerHTML = '<button id="btnSave" @click="save()">保存</button>\
+     <button id="btnCancel" @click="toggleSetting()">取消</button>'
+    listDiv.appendChild(actionDiv);
 
     var sch = new Vue({
       el: "#sch_app",
       methods: {
         toggleSetting: function () {
           this.showSetting = !this.showSetting;
+          // console.log(this.showSetting)
         },
         save: function () {
           GM_setValue("userList", this.list);
           location.reload();
+        },
+        choose : function(item){
+          if(this.list.includes(item)){
+            let pos = this.list.indexOf(item);
+            this.list.splice(pos, 1);
+          }else{
+            this.list.push(item);
+          }
         },
       },
       data: {
@@ -224,8 +223,6 @@
         showSetting: false,
       },
     });
-
-   
   }
   // sso综合平台
   if (
@@ -255,5 +252,3 @@
     window.location.href = "https://jwxt.scnu.edu.cn/";
   }
 })();
-
-
