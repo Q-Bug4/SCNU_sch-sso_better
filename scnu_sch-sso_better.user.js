@@ -1,41 +1,56 @@
 // ==UserScript==
 // @name         scnu 学者网sso界面改善
 // @namespace    https://github.com/wulnm/
-// @version      0.8
+// @version      1.0
 // @description  学者网未结课课程排版优化，sso默认显示我的应用，教务系统跳过等待页面
 // @author       wulnm
-// @match        http://www.scholat.com/myCourses.html
+// @match        https://www.scholat.com/myCourses.html
 // @match        https://sso.scnu.edu.cn/AccountService/user/index.html
 // @match        https://jwxt.scnu.edu.cn/xtgl/index_initMenu.html?jsdm=&_t=*
 // @require      https://cdn.jsdelivr.net/npm/vue/dist/vue.js
-// @grant        none
+
+// @grant   GM_getValue
+// @grant   GM_setValue
 // @run-at document-end
 
 // @note         2020年12月4日 改良了学者网课程判定逻辑
 // @note         2020年12月7日 增加学者网自定义选项按钮
+// @note         2021年1月22日 增加学者网自定义显示正在学习课程
 // ==/UserScript==
 (function () {
   "use strict";
 
   // 学者网
-  if (window.location.href == "http://www.scholat.com/myCourses.html") {
+  if (window.location.href == "https://www.scholat.com/myCourses.html") {
     var completedTD = [];
     var tab3 = document.getElementById("tabs_3");
 
-    var myLessons = [
-      "软件测试技术",
-      "科技文献阅读与写作",
-      "平面动画",
-      "大数据处理技术与应用",
-    ];
+    
+    function getCourseList(type) {
+      let ObjList;
+      if(type != undefined)
+        ObjList = document.getElementById(type);
+      else
+        ObjList = document;
+      let lessons = Array.from(ObjList.getElementsByClassName("evlistTitle"));
+      let res = [];
+      for (let i in lessons) {
+        let text = lessons[i].innerText;
+        if (text == undefined) continue;
+        res.push(text);
+      }
+      return res;
+    }
+    
+   
+    var userList = GM_getValue("userList"); // 用户设置课程列表
 
     var closedLessonObj = document.getElementById("closeCourse");
     var learnLessonObj = document.getElementById("learnCourse");
 
     function toLessons() {
       // 点击“学习的课程”
-      let lessons = undefined;
-      lessons = document.getElementById("ui-id-4").click();
+      document.getElementById("ui-id-4").click();
     }
 
     function toRealLessons() {
@@ -55,6 +70,7 @@
       while (lessons[lessons.length - 1] == 0) {
         lessons.pop(); //删除尾部的空元素
       }
+      var myLessons = userList == undefined ? lessons : userList;
 
       for (let i = 0; i < lessons.length; i++) {
         if (!myLessons.includes(lessons[i].innerText)) {
@@ -135,33 +151,52 @@
     sch_setting.id = "sch_app";
     sch_setting.innerHTML =
       '\
-    <div v-show = "showSetting" class = "side_guide_main" style="position: fixed; width: 300px; right:100px;  top: 128px; border: 1px rgb(238, 238, 238); font-size: 16px; line-height: 1.25em; \
-    color: rgb(255, 255, 255); background-color: rgb(51, 153, 153); right: 0px;">\
+    <div id = "settingDiv" v-show = "showSetting" class = "side_guide_main" style="position: fixed; width: 300px; right:100px;  top: 128px; border: 1px rgb(238, 238, 238); font-size: 16px; line-height: 1.25em; \
+    color: rgb(255, 255, 255); background-color: rgb(51, 153, 153); left: 0px;">\
       <div style="padding: 15px; font-size: 16px;">\
         <ul>\
           <div id = "list" style="padding: 15px; font-size: 16px;">\
           \
         </div>\
         </ul>\
+        <button id="btnSave" @click="save">保存</button>\
+        <button>取消</button>\
       </div>\
     </div>';
     document.getElementsByClassName("c")[0].appendChild(sch_setting);
 
-    var allLessons = Array.from(document.getElementsByClassName("evlistTitle"));
+    var allLessons = getCourseList();
 
     // 自定义div
     var listDiv = document.getElementById("list");
-    for (let i in allLessons) {
-      if (allLessons[i].innerText == undefined) continue;
-      listDiv.innerHTML +=
-        '<input type="checkbox" v-model="list" value="' +
-        allLessons[i].innerText +
-        '">' +
-        allLessons[i].innerText +
-        "<br>";
+
+    var learnList = getCourseList("learnCourse"); //正在学习列表(学者网展示的列表)
+    var closeList = getCourseList("closeCourse"); //已经被关闭的列表
+
+    // 生成列表变量
+    let tempList = [];
+    for(let i=0;i<allLessons.length;i++){
+      let lesson = allLessons[i];
+      if(!closeList.includes(lesson))
+        tempList.push(lesson)
+    }
+    
+    // 生成列表视图
+    genUserlist(tempList);
+    function genUserlist(lessons) {
+      for (let i=0;i<lessons.length;i++) {
+        if (lessons[i] == undefined) continue;
+        listDiv.innerHTML +=
+          '<input type="checkbox" v-model="list" value="' +
+          lessons[i]+
+          '">' +
+          lessons[i]+
+          "<br>";
+      }
     }
 
-    // 自定义按钮
+
+    // 增加"选项"按钮
     var divCustom = document.createElement("div");
     divCustom.innerHTML =
       '<div class="side_guide_main" style="position: fixed; width: 62px; top: 50px; cursor: pointer; border: 1px rgb(238, 238, 238); \
@@ -177,15 +212,20 @@
       methods: {
         toggleSetting: function () {
           this.showSetting = !this.showSetting;
-          console.log(this.showSetting)
+        },
+        save: function () {
+          GM_setValue("userList", this.list);
+          location.reload();
         },
       },
       data: {
         lessons: allLessons,
-        list: [],
+        list: userList == undefined ? [] : userList,
         showSetting: false,
       },
     });
+
+   
   }
   // sso综合平台
   if (
@@ -204,7 +244,7 @@
     head[0].classList["value"] = "toc";
     head[1].classList["value"] = "toc selected";
 
-    document.getElementById("bannerbox").remove();
+    document.getElementById("bannerList").remove();
   }
   // 教务系统
   if (
@@ -215,3 +255,5 @@
     window.location.href = "https://jwxt.scnu.edu.cn/";
   }
 })();
+
+
