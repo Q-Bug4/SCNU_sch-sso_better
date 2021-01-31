@@ -17,6 +17,7 @@
 // @note         2020年12月7日 增加学者网自定义选项按钮
 // @note         2021年1月22日 增加学者网自定义显示正在学习课程
 // @note         2021年1月22日 将设置按钮移动至右上角
+// @note         2021年1月31日 小小美化
 // ==/UserScript==
 (function () {
   "use strict";
@@ -147,14 +148,17 @@
     var sch_setting = document.createElement("div");
     sch_setting.id = "sch_app";
     sch_setting.innerHTML = '\
-      <div v-show="showSetting" id="list" style="position:absolute;left:100%;width:100%;background-color:rgb(18, 202, 255);border: 1px;rgb(238, 238, 238);text-align:left"></div>\
+    <div v-show="showSetting" style="position:absolute;left:100%;width:100%;text-align:left;background-color:rgb(18, 202, 255)">\
+    <div id="list" style="margin:13px">\
+      </div>\
+    </div>\
     '
     var t5 = document.createElement("li");
     t5.id = "t5";
-    t5.style = "position:absolute;top:0%;right:-30%;background-color:rgb(18, 202, 255)";
+    t5.style = "position:absolute;top:0%;right:-30%";
     t5.innerHTML =
-      '<p class="p1" title="Message" style="width:48px;text-align:left;">\
-    <a style="font-size:14px;color:#fff;"  href="javascript:void(0)" @click="toggleSetting()">设置</a>\
+      '<p class="p1"  style="width:48px;text-align:left;">\
+    <button style="position:absolute;cursor: pointer;top:20%;font-size:14px;background-color: #51A8DD;border-color: #577C8A;" @click="toggleSetting()">设置</button>\
      </p>';
      sch_setting.appendChild(t5);
     document.getElementsByClassName("navList")[0].appendChild(sch_setting);
@@ -187,7 +191,7 @@
           '<input type="checkbox" v-model="list" value="' +
           lesson +
           '">' +
-          '<a href="javascript:void(0);" @click="choose(\''+lesson +'\')">'+lesson+'</a>' +
+          '<a style="color:#6E552F;margin:5px;" href="javascript:void(0);" @click="choose(\''+lesson +'\')">'+lesson+'</a>' +
           "<br>";
       }
     }
