@@ -30,8 +30,8 @@
 
 - 学者网
 
-![image-20210219144738863](C:\Users\wumcpq\AppData\Roaming\Typora\typora-user-images\image-20210219144738863.png)
+![image-20210219144738863](https://i.loli.net/2021/02/19/c6zjC8YEZDXKU9G.png)
 
 - SSO平台
 
-![image-20210219145116642](C:\Users\wumcpq\AppData\Roaming\Typora\typora-user-images\image-20210219145116642.png)
+![image-20210219145116642](https://i.loli.net/2021/02/19/X1dOnHoUJWIe4hK.png)
