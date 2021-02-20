@@ -1,16 +1,19 @@
 // ==UserScript==
 // @name         scnu 学者网sso界面改善
 // @namespace    https://github.com/wulnm/
-// @version      1.0
-// @description  学者网未结课课程排版优化，sso默认显示我的应用，教务系统跳过等待页面
+// @version      1.1
+// @description  学者网未结课课程排版优化，sso默认显示我的应用，教务系统跳过等待页面, 砺儒云优化
 // @author       wulnm
 // @match        https://www.scholat.com/myCourses.html
 // @match        https://sso.scnu.edu.cn/AccountService/user/index.html
 // @match        https://jwxt.scnu.edu.cn/xtgl/index_initMenu.html?jsdm=&_t=*
+// @match        https://moodle.scnu.edu.cn/*
 // @require      https://cdn.jsdelivr.net/npm/vue/dist/vue.js
+// @require      file:///E:/study/code/js/SCNU_sch-sso_better/scnu_sch-sso_better.user.js
 
 // @grant   GM_getValue
 // @grant   GM_setValue
+// @grant   GM_deleteValue
 // @run-at document-end
 
 // @note         2020年12月4日 改良了学者网课程判定逻辑
@@ -18,6 +21,7 @@
 // @note         2021年1月22日 增加学者网自定义显示正在学习课程
 // @note         2021年1月22日 将设置按钮移动至右上角
 // @note         2021年1月31日 小小美化
+// @note         2021年2月20日 添加砺儒云首页课程显示功能
 // ==/UserScript==
 (function () {
   "use strict";
@@ -147,20 +151,21 @@
 
     var sch_setting = document.createElement("div");
     sch_setting.id = "sch_app";
-    sch_setting.innerHTML = '\
+    sch_setting.innerHTML =
+      '\
     <div v-show="showSetting" style="position:absolute;left:100%;width:100%;text-align:left;background-color:rgb(18, 202, 255)">\
     <div id="list" style="margin:13px">\
       </div>\
     </div>\
-    '
+    ';
     var t5 = document.createElement("li");
     t5.id = "t5";
     t5.style = "position:absolute;top:0%;right:-30%";
     t5.innerHTML =
       '<p class="p1"  style="width:48px;text-align:left;">\
     <button style="position:absolute;cursor: pointer;top:20%;font-size:14px;background-color: #51A8DD;border-color: #577C8A;" @click="toggleSetting()">设置</button>\
-     </p>';
-     sch_setting.appendChild(t5);
+    </p>';
+    sch_setting.appendChild(t5);
     document.getElementsByClassName("navList")[0].appendChild(sch_setting);
 
     // document.getElementsByClassName("c")[0].appendChild(sch_setting);
@@ -168,11 +173,10 @@
     var allLessons = getCourseList();
 
     // 自定义div
-    var listDiv = document.getElementById('list');
+    var listDiv = document.getElementById("list");
 
     var learnList = getCourseList("learnCourse"); //正在学习列表(学者网展示的列表)
     var closeList = getCourseList("closeCourse"); //已经被关闭的列表
-
 
     // 生成列表变量
     let tempList = [];
@@ -191,14 +195,19 @@
           '<input type="checkbox" v-model="list" value="' +
           lesson +
           '">' +
-          '<a style="color:#6E552F;margin:5px;" href="javascript:void(0);" @click="choose(\''+lesson +'\')">'+lesson+'</a>' +
+          '<a style="color:#6E552F;margin:5px;" href="javascript:void(0);" @click="choose(\'' +
+          lesson +
+          "')\">" +
+          lesson +
+          "</a>" +
           "<br>";
       }
     }
     // 生成操作按钮
     let actionDiv = document.createElement("div");
-    actionDiv.innerHTML = '<button id="btnSave" @click="save()">保存</button>\
-     <button id="btnCancel" @click="toggleSetting()">取消</button>'
+    actionDiv.innerHTML =
+      '<button id="btnSave" @click="save()">保存</button>\
+      <button id="btnCancel" @click="toggleSetting()">取消</button>';
     listDiv.appendChild(actionDiv);
 
     var sch = new Vue({
@@ -212,11 +221,11 @@
           GM_setValue("userList", this.list);
           location.reload();
         },
-        choose : function(item){
-          if(this.list.includes(item)){
+        choose: function (item) {
+          if (this.list.includes(item)) {
             let pos = this.list.indexOf(item);
             this.list.splice(pos, 1);
-          }else{
+          } else {
             this.list.push(item);
           }
         },
@@ -254,5 +263,166 @@
     )
   ) {
     window.location.href = "https://jwxt.scnu.edu.cn/";
+  }
+  // 砺儒云
+  if(window.location.href.includes("https://moodle.scnu.edu.cn/")){
+    let moodle_userList = GM_getValue("moodle_userList");
+  // quiz
+  function removeMarked() {
+    // remove all icons
+    var icons = document.getElementsByClassName("icon");
+    for (let i = icons.length - 1; i >= 0; i--) {
+      icons[i].parentNode.removeChild(icons[i]);
+    }
+
+    // remove correct class
+    var t = document.getElementsByClassName("correct");
+    for (let i = t.length - 1; i >= 0; i--) {
+      if (t[i].className.search("que multichoice deferredfeedback") == -1)
+        t[i].className = "r0";
+    }
+
+    // remove incorrect class
+    var t2 = document.getElementsByClassName("incorrect");
+    for (let i = t2.length - 1; i >= 0; i--) {
+      if (t2[i].className.search("que multichoice deferredfeedback") == -1)
+        t2[i].className = "r0";
+    }
+
+    //checkbox & text
+    var input = document.getElementsByTagName("input");
+    for (let i in input) {
+      if (input[i].checked != undefined) input[i].checked = false;
+      input[i].value = "";
+    }
+  }
+
+  // 获取总课程列表于href映射关系
+  function getLessonsMap() {
+    let map = {};
+    $(".type_system")
+      .children("ul[id^='random'][id$='_group']")
+      .children("li")
+      .children("p")
+      .children("a")
+      .each(function () {
+        map[$(this)[0].title] = $(this)[0].href;
+      });
+    return map;
+  }
+
+  // 新建设置按钮及列表
+  function build(lessonsMap) {
+    let temp = $('<li id="moodle_app"></li>');
+
+    temp.append(
+      $(
+        '<a id="SettingTitle" href="javascript:void(0)" @click="toggleSetting">显示课程设置</a>'
+      )
+    );
+    temp.css("background-color", "#ff855c");
+    temp.css("cursor", "pointer");
+    $(".nav.college").append(temp);
+
+    // 生成列表
+    let div = $(
+      '<div id="settings" v-show="showSetting" style="position:absolute;width:400px;top:105%;background-color:#323a45;z-index:999;cursor:default;"></div>'
+    );
+    for (let key in lessonsMap) {
+      let lesson = key;
+      div.append(
+        $(
+          '<input v-model="list" type="checkbox" style="margin:5px;" value=' +
+            lesson +
+            ">"
+        )
+      );
+      div.append(
+        $(
+          '<a style="margin:5px;" href="javascript:void(0);" @click="choose(\'' +
+            lesson +
+            "')\">" +
+            lesson +
+            "</a>"
+        )
+      );
+
+      div.append($("<br>"));
+    }
+    div.append($('<button @click="save()">保存</button>'));
+    $("#moodle_app").append(div);
+  }
+
+  // 首页显示已选课程
+  function showLessons() {
+    var lessonDiv = $('<div id="home-course-list" ></div>');
+    var title_h2 = $("<h2></h2>").text("已选课程");
+    let map = getLessonsMap()
+    lessonDiv.append(title_h2);
+    lessonDiv.append('<div class="divider line-01"></div>');
+    let a = $('<div class="courses frontpage-course-list-all"></div>');
+    let b = $('<div class="row-fluid"></div>');
+    a.append(b);
+    lessonDiv.append(a);
+    $("#page").prepend(lessonDiv);
+    let clearfix = $('<div class="clearfix hidexs"></div>');
+    if (moodle_userList != undefined)
+      for (let i = 0; i < moodle_userList.length; i++) {
+        console.log(map["软件测试"])
+        let lessonHtml =
+          '<div class="image-box span3">' +
+          '<a class="course-box" href="' +
+          map[moodle_userList[i]]+
+          '">' +
+          '<div class="img-inner">' +
+          '<img src="https://moodle.scnu.edu.cn/theme/image.php/lambda/theme/1613040290/noimage/default03" ' +
+          'class="img-responsive" width="100%" alt=' +
+          moodle_userList[i] +
+          "</div></div>" +
+          '<div class="image-box-content">'+
+          '<div class="course-detail">'+
+          '<h5 style="overflow: visible;">' +
+          moodle_userList[i] +
+          "</h5></div></div>" ;
+        b.append($(lessonHtml));
+        if (i % 4 == 3) b.append($(clearfix));
+      }
+  }
+
+  // Main
+  build(getLessonsMap());
+  showLessons();
+  $("#camera_wrap").remove(); // 去除公告栏
+
+  var moodle = new Vue({
+    el: "#moodle_app",
+    methods: {
+      toggleSetting: function () {
+        this.showSetting = !this.showSetting;
+        console.log(this.showSetting);
+      },
+      save: function () {
+        GM_setValue("moodle_userList", this.list);
+        location.reload();
+      },
+      choose: function (item) {
+        if (this.list.includes(item)) {
+          let pos = this.list.indexOf(item);
+          this.list.splice(pos, 1);
+        } else {
+          this.list.push(item);
+        }
+        console.log(this.list);
+      },
+      getMap : function(){
+        return map;
+      }
+    },
+    data: {
+      map: getLessonsMap(),
+      list: moodle_userList == undefined ? [] : moodle_userList,
+      showSetting: false,
+    },
+  });
   }
 })();
