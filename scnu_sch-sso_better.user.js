@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         scnu 学者网sso界面改善
 // @namespace    https://github.com/wulnm/
-// @version      1.1
+// @version      1.2
 // @description  学者网未结课课程排版优化，sso默认显示我的应用，教务系统跳过等待页面, 砺儒云优化
 // @author       wulnm
 // @match        https://www.scholat.com/myCourses.html
