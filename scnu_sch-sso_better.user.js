@@ -22,6 +22,7 @@
 // @note         2021年1月22日 将设置按钮移动至右上角
 // @note         2021年1月31日 小小美化
 // @note         2021年2月20日 添加砺儒云首页课程显示功能
+// @note         2021年2月22日 添加砺儒云清除quiz记录功能
 // ==/UserScript==
 (function () {
   "use strict";
@@ -269,6 +270,7 @@
     let moodle_userList = GM_getValue("moodle_userList");
   // quiz
   function removeMarked() {
+    // TODO 减少误删的图标文本等
     // remove all icons
     var icons = document.getElementsByClassName("icon");
     for (let i = icons.length - 1; i >= 0; i--) {
@@ -278,23 +280,57 @@
     // remove correct class
     var t = document.getElementsByClassName("correct");
     for (let i = t.length - 1; i >= 0; i--) {
-      if (t[i].className.search("que multichoice deferredfeedback") == -1)
+      if (
+        t[i].className.search("que multichoice deferredfeedback") == -1 &&
+        t[i].className.search("que truefalse deferredfeedback") == -1 &&
+        t[i].className.search("que shortanswer deferredfeedback correct") == -1
+      )
         t[i].className = "r0";
     }
 
     // remove incorrect class
     var t2 = document.getElementsByClassName("incorrect");
     for (let i = t2.length - 1; i >= 0; i--) {
-      if (t2[i].className.search("que multichoice deferredfeedback") == -1)
+      if (
+        t2[i].className.search("que multichoice deferredfeedback") == -1 &&
+        t2[i].className.search("que truefalse deferredfeedback") == -1 &&
+        t2[i].className.search("que shortanswer deferredfeedback incorrect") == -1
+      )
         t2[i].className = "r0";
     }
 
-    //checkbox & text
+    // hide right answer
+    $(".outcome.clearfix").each(function () {
+      $(this).children(".feedback").children(".rightanswer").css("display", "none");
+      $(this).hover(
+        function () {
+          $(this).children(".feedback").children(".rightanswer").css("display", "block");
+        },
+        function () {
+          $(this).children(".feedback").children(".rightanswer").css("display", "none");
+        }
+      );
+    });
+
+    // checkbox & text
     var input = document.getElementsByTagName("input");
     for (let i in input) {
       if (input[i].checked != undefined) input[i].checked = false;
-      input[i].value = "";
+      if (input[i].type == "text") input[i].value = "";
     }
+  }
+
+  function buildClearQuizBtn(){
+    let temp = $("<li></li>")
+  temp.append(
+    $(
+      '<a href="javascript:void(0)"">清除quiz记录</a>'
+    )
+  );
+  temp.css("background-color", "#ff855c");
+  temp.css("cursor", "pointer");
+  temp.bind("click",removeMarked)
+  $(".nav:eq(2)").append(temp)
   }
 
   // 获取总课程列表于href映射关系
@@ -391,7 +427,10 @@
 
   // Main
   build(getLessonsMap());
-  showLessons();
+  if(window.location.href == "https://moodle.scnu.edu.cn/")
+    showLessons();
+  if(window.location.href.includes("https://moodle.scnu.edu.cn/mod/quiz/review.php"))
+    buildClearQuizBtn();
   $("#camera_wrap").remove(); // 去除公告栏
 
   var moodle = new Vue({
